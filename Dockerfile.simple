@@ -22,9 +22,11 @@ RUN VLLM_PATH=$(cat /tmp/vllm_path) && \
     cp -r /tmp/bosonai_entrypoints/* $VLLM_PATH/entrypoints/bosonai/
 
 # Copy higgs audio model files
-COPY vllm/model_executor/models/higgs_audio*.py /tmp/
+COPY vllm/model_executor/models/higgs_audio.py /tmp/higgs_audio.py
+COPY vllm/model_executor/models/higgs_audio_config.py /tmp/higgs_audio_config.py
+COPY vllm/model_executor/models/higgs_audio_tokenizer.py /tmp/higgs_audio_tokenizer.py
 RUN VLLM_PATH=$(cat /tmp/vllm_path) && \
-    cp /tmp/higgs_audio*.py $VLLM_PATH/model_executor/models/
+    cp /tmp/higgs_audio.py /tmp/higgs_audio_config.py /tmp/higgs_audio_tokenizer.py $VLLM_PATH/model_executor/models/
 
 # Set entrypoint for audio server
 ENTRYPOINT ["python3", "-m", "vllm.entrypoints.bosonai.api_server"]
