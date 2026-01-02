@@ -65,7 +65,7 @@ jobs:
         with:
           context: .
           file: ./docker/Dockerfile
-          target: vllm-bosonai
+          target: vllm-boson-base
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
