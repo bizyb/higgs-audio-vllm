@@ -10,23 +10,18 @@ RUN pip install --no-cache-dir -r /tmp/bosonai.txt
 # Install higgs-audio from GitHub (the boson_multimodal package)
 RUN pip install --no-cache-dir git+https://github.com/boson-ai/higgs-audio.git
 
-# Find vLLM install location and copy our modifications
+# Get vLLM path and create bosonai entrypoints directory
 RUN VLLM_PATH=$(python3 -c "import vllm; print(vllm.__path__[0])") && \
-    echo "vLLM installed at: $VLLM_PATH" && \
     mkdir -p $VLLM_PATH/entrypoints/bosonai && \
-    echo $VLLM_PATH > /tmp/vllm_path
+    ln -sf $VLLM_PATH /vllm_pkg
 
 # Copy bosonai entrypoints
-COPY vllm/entrypoints/bosonai/ /tmp/bosonai_entrypoints/
-RUN VLLM_PATH=$(cat /tmp/vllm_path) && \
-    cp -r /tmp/bosonai_entrypoints/* $VLLM_PATH/entrypoints/bosonai/
+COPY vllm/entrypoints/bosonai/ /vllm_pkg/entrypoints/bosonai/
 
 # Copy higgs audio model files
-COPY vllm/model_executor/models/higgs_audio.py /tmp/higgs_audio.py
-COPY vllm/model_executor/models/higgs_audio_config.py /tmp/higgs_audio_config.py
-COPY vllm/model_executor/models/higgs_audio_tokenizer.py /tmp/higgs_audio_tokenizer.py
-RUN VLLM_PATH=$(cat /tmp/vllm_path) && \
-    cp /tmp/higgs_audio.py /tmp/higgs_audio_config.py /tmp/higgs_audio_tokenizer.py $VLLM_PATH/model_executor/models/
+COPY vllm/model_executor/models/higgs_audio.py /vllm_pkg/model_executor/models/
+COPY vllm/model_executor/models/higgs_audio_config.py /vllm_pkg/model_executor/models/
+COPY vllm/model_executor/models/higgs_audio_tokenizer.py /vllm_pkg/model_executor/models/
 
 # Set entrypoint for audio server
 ENTRYPOINT ["python3", "-m", "vllm.entrypoints.bosonai.api_server"]
