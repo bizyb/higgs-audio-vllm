@@ -16,6 +16,9 @@ RUN pip install --no-cache-dir git+https://github.com/boson-ai/higgs-audio.git
 # Create bosonai entrypoints directory
 RUN mkdir -p $VLLM_PATH/entrypoints/bosonai
 
+# Copy modified openai entrypoints (includes AudioSpeechRequest in protocol.py)
+COPY vllm/entrypoints/openai/ $VLLM_PATH/entrypoints/openai/
+
 # Copy bosonai entrypoints
 COPY vllm/entrypoints/bosonai/ $VLLM_PATH/entrypoints/bosonai/
 
