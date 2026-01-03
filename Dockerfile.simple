@@ -13,6 +13,12 @@ RUN pip install --no-cache-dir -r /tmp/bosonai.txt
 # Install higgs-audio from GitHub (the boson_multimodal package)
 RUN pip install --no-cache-dir git+https://github.com/boson-ai/higgs-audio.git
 
+# Fix missing __init__.py files in boson_multimodal (upstream bug)
+RUN BOSON_PATH=$(python3 -c "import boson_multimodal; print(boson_multimodal.__path__[0])" 2>/dev/null | tail -1) && \
+    touch $BOSON_PATH/audio_processing/__init__.py && \
+    touch $BOSON_PATH/audio_processing/descriptaudiocodec/__init__.py && \
+    touch $BOSON_PATH/audio_processing/quantization/__init__.py
+
 # Create bosonai entrypoints directory
 RUN mkdir -p $VLLM_PATH/entrypoints/bosonai
 
