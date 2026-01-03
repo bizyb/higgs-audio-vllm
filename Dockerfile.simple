@@ -1,10 +1,11 @@
 # Simplified Dockerfile for Higgs Audio vLLM
-# Uses official vLLM image as base, adds higgs-audio modifications
+# Uses official vLLM image as base, overlays boson-ai's modifications
 
 FROM vllm/vllm-openai:v0.8.3
 
-# vLLM is installed at this path in the base image
+# Paths
 ENV VLLM_PATH=/usr/local/lib/python3.12/dist-packages/vllm
+ENV BOSON_PATH=/usr/local/lib/python3.12/dist-packages/boson_multimodal
 
 # Install higgs-audio dependencies
 COPY requirements/bosonai.txt /tmp/bosonai.txt
@@ -15,7 +16,6 @@ RUN pip install --no-cache-dir git+https://github.com/boson-ai/higgs-audio.git
 
 # Fix missing __init__.py files in boson_multimodal (upstream bug)
 # pip doesn't install directories without __init__.py, so we need to copy them manually
-ENV BOSON_PATH=/usr/local/lib/python3.12/dist-packages/boson_multimodal
 RUN git clone --depth 1 https://github.com/boson-ai/higgs-audio.git /tmp/higgs-audio && \
     cp -r /tmp/higgs-audio/boson_multimodal/audio_processing $BOSON_PATH/ && \
     touch $BOSON_PATH/audio_processing/__init__.py && \
@@ -23,28 +23,9 @@ RUN git clone --depth 1 https://github.com/boson-ai/higgs-audio.git /tmp/higgs-a
     touch $BOSON_PATH/audio_processing/quantization/__init__.py && \
     rm -rf /tmp/higgs-audio
 
-# Create bosonai entrypoints directory
-RUN mkdir -p $VLLM_PATH/entrypoints/bosonai
-
-# Copy modified vllm __init__.py (registers HiggsAudioConfig)
-COPY vllm/__init__.py $VLLM_PATH/__init__.py
-
-# Copy modified chat_utils.py (audio support)
-COPY vllm/entrypoints/chat_utils.py $VLLM_PATH/entrypoints/chat_utils.py
-
-# Copy modified openai entrypoints (includes AudioSpeechRequest, ChatCompletionAudio)
-COPY vllm/entrypoints/openai/ $VLLM_PATH/entrypoints/openai/
-
-# Copy bosonai entrypoints
-COPY vllm/entrypoints/bosonai/ $VLLM_PATH/entrypoints/bosonai/
-
-# Copy higgs audio model files
-COPY vllm/model_executor/models/higgs_audio.py $VLLM_PATH/model_executor/models/
-COPY vllm/model_executor/models/higgs_audio_config.py $VLLM_PATH/model_executor/models/
-COPY vllm/model_executor/models/higgs_audio_tokenizer.py $VLLM_PATH/model_executor/models/
-
-# Copy modified registry.py (registers HiggsAudioModel)
-COPY vllm/model_executor/models/registry.py $VLLM_PATH/model_executor/models/
+# Replace entire vllm directory with boson-ai's fork
+# This is necessary because the fork modifies many core files
+COPY vllm/ $VLLM_PATH/
 
 # Set entrypoint for audio server
 ENTRYPOINT ["python3", "-m", "vllm.entrypoints.bosonai.api_server"]
