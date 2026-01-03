@@ -1,5 +1,5 @@
 # Simplified Dockerfile for Higgs Audio vLLM
-# Uses official vLLM image as base, adds higgs-audio on top
+# Uses official vLLM image as base, adds higgs-audio modifications
 
 FROM vllm/vllm-openai:v0.8.3
 
@@ -16,7 +16,13 @@ RUN pip install --no-cache-dir git+https://github.com/boson-ai/higgs-audio.git
 # Create bosonai entrypoints directory
 RUN mkdir -p $VLLM_PATH/entrypoints/bosonai
 
-# Copy modified openai entrypoints (includes AudioSpeechRequest in protocol.py)
+# Copy modified vllm __init__.py (registers HiggsAudioConfig)
+COPY vllm/__init__.py $VLLM_PATH/__init__.py
+
+# Copy modified chat_utils.py (audio support)
+COPY vllm/entrypoints/chat_utils.py $VLLM_PATH/entrypoints/chat_utils.py
+
+# Copy modified openai entrypoints (includes AudioSpeechRequest, ChatCompletionAudio)
 COPY vllm/entrypoints/openai/ $VLLM_PATH/entrypoints/openai/
 
 # Copy bosonai entrypoints
@@ -26,6 +32,9 @@ COPY vllm/entrypoints/bosonai/ $VLLM_PATH/entrypoints/bosonai/
 COPY vllm/model_executor/models/higgs_audio.py $VLLM_PATH/model_executor/models/
 COPY vllm/model_executor/models/higgs_audio_config.py $VLLM_PATH/model_executor/models/
 COPY vllm/model_executor/models/higgs_audio_tokenizer.py $VLLM_PATH/model_executor/models/
+
+# Copy modified registry.py (registers HiggsAudioModel)
+COPY vllm/model_executor/models/registry.py $VLLM_PATH/model_executor/models/
 
 # Set entrypoint for audio server
 ENTRYPOINT ["python3", "-m", "vllm.entrypoints.bosonai.api_server"]
