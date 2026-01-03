@@ -588,7 +588,7 @@ class HFHiggsAudioProcessor(ProcessorMixin):
         audio_eos_token="<|audio_eos|>",
         audio_stream_bos_id=None,
         audio_stream_eos_id=None,
-        is_audio_out_model=False,
+        is_audio_out_model=True,
     ):
         self.is_audio_out_model = is_audio_out_model
         if chat_template is None:
